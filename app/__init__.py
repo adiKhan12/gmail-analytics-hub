@@ -1,0 +1,3 @@
+"""
+Email Planner Backend Application
+""" 
