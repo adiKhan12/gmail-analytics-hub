@@ -15,10 +15,20 @@ import {
   FormControlLabel,
   Switch,
   Chip,
+  InputAdornment,
+  Fade,
+  Divider,
+  SelectChangeEvent,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import CloseIcon from '@mui/icons-material/Close';
+import TuneIcon from '@mui/icons-material/Tune';
+import CategoryIcon from '@mui/icons-material/Category';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+import PersonIcon from '@mui/icons-material/Person';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import ClearIcon from '@mui/icons-material/Clear';
 
 interface SearchFilters {
   search: string;
@@ -49,27 +59,26 @@ const EmailSearch: React.FC<EmailSearchProps> = ({ onSearch }) => {
     setFilters({ ...filters, [name]: value });
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const handleSelectChange = (e: SelectChangeEvent) => {
     const name = e.target.name as string;
     const value = e.target.value as string;
     setFilters({ ...filters, [name]: value });
   };
 
   const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFilters({ ...filters, [name]: checked });
+    setFilters({ ...filters, hasActionItems: e.target.checked });
   };
 
   const handleSearch = () => {
-    // Update active filters for display
-    const newActiveFilters = [];
-    if (filters.search) newActiveFilters.push(`Search: ${filters.search}`);
-    if (filters.category) newActiveFilters.push(`Category: ${filters.category}`);
-    if (filters.minPriority) newActiveFilters.push(`Min Priority: ${filters.minPriority}`);
-    if (filters.sender) newActiveFilters.push(`Sender: ${filters.sender}`);
-    if (filters.hasActionItems) newActiveFilters.push('Has Action Items');
+    // Update active filters
+    const active = [];
+    if (filters.search) active.push('Search');
+    if (filters.category) active.push('Category');
+    if (filters.minPriority) active.push('Priority');
+    if (filters.sender) active.push('Sender');
+    if (filters.hasActionItems) active.push('Action Items');
     
-    setActiveFilters(newActiveFilters);
+    setActiveFilters(active);
     onSearch(filters);
   };
 
@@ -98,127 +107,249 @@ const EmailSearch: React.FC<EmailSearchProps> = ({ onSearch }) => {
   };
 
   return (
-    <Paper sx={{ p: 2, mb: 3 }}>
-      <Box sx={{ mb: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs>
-            <TextField
-              fullWidth
-              name="search"
-              value={filters.search}
-              onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
-              placeholder="Search emails..."
-              InputProps={{
-                startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
-              }}
-            />
-          </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSearch}
-              startIcon={<SearchIcon />}
-            >
-              Search
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              variant="outlined"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              startIcon={<FilterListIcon />}
-            >
-              {showAdvanced ? 'Hide Filters' : 'Show Filters'}
-            </Button>
-          </Grid>
-        </Grid>
+    <Paper 
+      elevation={2} 
+      sx={{ 
+        p: 3, 
+        mb: 3, 
+        borderRadius: 2,
+        background: 'linear-gradient(to bottom, #ffffff, #f8f9ff)'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <SearchIcon sx={{ mr: 1, color: '#1976d2' }} />
+          Email Search
+        </Typography>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          startIcon={<TuneIcon />}
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          color="primary"
+          sx={{ 
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 'medium',
+          }}
+        >
+          {showAdvanced ? 'Hide Filters' : 'Show Filters'}
+        </Button>
       </Box>
 
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          fullWidth
+          name="search"
+          value={filters.search}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          placeholder="Search emails by subject, content, or sender..."
+          variant="outlined"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: filters.search ? (
+              <InputAdornment position="end">
+                <IconButton 
+                  size="small" 
+                  onClick={() => {
+                    setFilters({ ...filters, search: '' });
+                  }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ) : null,
+            sx: { 
+              borderRadius: 2,
+              backgroundColor: 'white',
+              '&:hover': {
+                backgroundColor: 'white',
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'white',
+              }
+            }
+          }}
+        />
+      </Box>
+
+      <Collapse in={showAdvanced}>
+        <Fade in={showAdvanced}>
+          <Box sx={{ mt: 3 }}>
+            <Typography 
+              variant="subtitle2" 
+              sx={{ 
+                mb: 2, 
+                fontWeight: 'medium',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <FilterListIcon sx={{ mr: 1, fontSize: '0.9rem' }} />
+              Advanced Filters
+            </Typography>
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth variant="outlined" size="small">
+                  <InputLabel id="category-label" sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CategoryIcon sx={{ mr: 0.5, fontSize: '0.9rem' }} /> Category
+                  </InputLabel>
+                  <Select
+                    labelId="category-label"
+                    name="category"
+                    value={filters.category}
+                    onChange={handleSelectChange}
+                    label="Category"
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    <MenuItem value="Work">Work</MenuItem>
+                    <MenuItem value="Personal">Personal</MenuItem>
+                    <MenuItem value="Social">Social</MenuItem>
+                    <MenuItem value="Promotions">Promotions</MenuItem>
+                    <MenuItem value="Updates">Updates</MenuItem>
+                    <MenuItem value="Forums">Forums</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControl fullWidth variant="outlined" size="small">
+                  <InputLabel id="priority-label" sx={{ display: 'flex', alignItems: 'center' }}>
+                    <PriorityHighIcon sx={{ mr: 0.5, fontSize: '0.9rem' }} /> Min Priority
+                  </InputLabel>
+                  <Select
+                    labelId="priority-label"
+                    name="minPriority"
+                    value={filters.minPriority}
+                    onChange={handleSelectChange}
+                    label="Min Priority"
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value="">Any Priority</MenuItem>
+                    <MenuItem value="1">1 - Low</MenuItem>
+                    <MenuItem value="2">2</MenuItem>
+                    <MenuItem value="3">3 - Medium</MenuItem>
+                    <MenuItem value="4">4</MenuItem>
+                    <MenuItem value="5">5 - High</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  name="sender"
+                  label="Sender"
+                  value={filters.sender}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    sx: { borderRadius: 2 }
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6} md={3}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={filters.hasActionItems}
+                      onChange={handleSwitchChange}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <AssignmentIcon sx={{ mr: 0.5, fontSize: '1rem' }} />
+                      <Typography variant="body2">Has Action Items</Typography>
+                    </Box>
+                  }
+                />
+              </Grid>
+            </Grid>
+            
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                onClick={handleClearFilters}
+                sx={{ 
+                  mr: 1, 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  borderColor: '#d32f2f',
+                  color: '#d32f2f',
+                  '&:hover': {
+                    borderColor: '#b71c1c',
+                    backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                  }
+                }}
+                startIcon={<CloseIcon />}
+              >
+                Clear Filters
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSearch}
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 'medium',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
+                }}
+                startIcon={<SearchIcon />}
+              >
+                Apply Filters
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+      </Collapse>
+
       {activeFilters.length > 0 && (
-        <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {activeFilters.map((filter, index) => (
-            <Chip 
-              key={index} 
-              label={filter} 
-              onDelete={() => {}} 
-              color="primary" 
-              variant="outlined" 
+        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {activeFilters.map((filter) => (
+            <Chip
+              key={filter}
+              label={filter}
+              color="primary"
+              variant="outlined"
+              size="small"
+              sx={{ borderRadius: 1 }}
             />
           ))}
-          <Chip 
-            label="Clear All" 
-            onDelete={handleClearFilters} 
-            color="secondary" 
+          <Chip
+            label="Clear All"
+            variant="outlined"
+            size="small"
+            onClick={handleClearFilters}
+            sx={{ 
+              borderRadius: 1,
+              borderColor: '#d32f2f',
+              color: '#d32f2f',
+            }}
           />
         </Box>
       )}
-
-      <Collapse in={showAdvanced}>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth variant="outlined" size="small">
-              <InputLabel>Category</InputLabel>
-              <Select
-                name="category"
-                value={filters.category}
-                onChange={handleSelectChange}
-                label="Category"
-              >
-                <MenuItem value="">All Categories</MenuItem>
-                <MenuItem value="Work">Work</MenuItem>
-                <MenuItem value="Personal">Personal</MenuItem>
-                <MenuItem value="Newsletter">Newsletter</MenuItem>
-                <MenuItem value="Promotional">Promotional</MenuItem>
-                <MenuItem value="Social">Social</MenuItem>
-                <MenuItem value="Other">Other</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth variant="outlined" size="small">
-              <InputLabel>Min Priority</InputLabel>
-              <Select
-                name="minPriority"
-                value={filters.minPriority}
-                onChange={handleSelectChange}
-                label="Min Priority"
-              >
-                <MenuItem value="">Any Priority</MenuItem>
-                <MenuItem value="1">1 - Low</MenuItem>
-                <MenuItem value="2">2</MenuItem>
-                <MenuItem value="3">3 - Medium</MenuItem>
-                <MenuItem value="4">4</MenuItem>
-                <MenuItem value="5">5 - High</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              name="sender"
-              label="Sender"
-              value={filters.sender}
-              onChange={handleInputChange}
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={filters.hasActionItems}
-                  onChange={handleSwitchChange}
-                  name="hasActionItems"
-                  color="primary"
-                />
-              }
-              label="Has Action Items"
-            />
-          </Grid>
-        </Grid>
-      </Collapse>
     </Paper>
   );
 };

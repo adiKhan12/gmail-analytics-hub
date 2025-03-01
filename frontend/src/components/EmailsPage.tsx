@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { 
+  Container, 
+  Box, 
+  Typography, 
+  CircularProgress, 
+  Snackbar, 
+  Alert, 
+  Paper, 
+  Divider,
+  Fade,
+  Backdrop,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import EmailIcon from '@mui/icons-material/Email';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import EmailSearch from './EmailSearch';
 import EmailList from './EmailList';
 import EmailDetail from './EmailDetail';
@@ -21,6 +37,9 @@ const EmailsPage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [filters, setFilters] = useState<SearchFilters>({
     search: '',
     category: '',
@@ -47,6 +66,17 @@ const EmailsPage: React.FC = () => {
       setError('Failed to load emails. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchEmails();
+    } finally {
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 500); // Add a small delay to make the refresh animation visible
     }
   };
 
@@ -174,15 +204,108 @@ const EmailsPage: React.FC = () => {
 
   const handleCloseError = () => setError(null);
 
+  const getUnreadCount = () => {
+    return emails.filter(email => !email.is_read).length;
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4" component="h1">
-          Emails
-        </Typography>
-      </Box>
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: 3, 
+          mb: 3, 
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #1976d2, #2196f3)',
+          color: 'white',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" alignItems="center">
+            <EmailIcon sx={{ fontSize: 36, mr: 2, opacity: 0.9 }} />
+            <Box>
+              <Typography 
+                variant="h4" 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 'bold',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  mb: 0.5
+                }}
+              >
+                Email Manager
+              </Typography>
+              <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+                Organize and manage your emails efficiently
+              </Typography>
+            </Box>
+          </Box>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignSelf: { xs: 'flex-end', sm: 'center' }
+            }}
+          >
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                bgcolor: 'rgba(255,255,255,0.2)', 
+                px: 2, 
+                py: 1, 
+                borderRadius: 2
+              }}
+            >
+              <MarkEmailReadIcon sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                <strong>{getUnreadCount()}</strong> unread of <strong>{totalEmails}</strong> emails
+              </Typography>
+            </Box>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                bgcolor: 'rgba(255,255,255,0.2)', 
+                px: 2, 
+                py: 1, 
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.3)',
+                },
+              }}
+              onClick={handleRefresh}
+            >
+              <RefreshIcon 
+                sx={{ 
+                  mr: 1,
+                  animation: refreshing ? 'spin 1s linear infinite' : 'none',
+                  '@keyframes spin': {
+                    '0%': {
+                      transform: 'rotate(0deg)',
+                    },
+                    '100%': {
+                      transform: 'rotate(360deg)',
+                    },
+                  },
+                }} 
+              />
+              <Typography variant="body2">
+                Refresh
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
 
-      <EmailSearch onSearch={handleSearch} />
+      <Box sx={{ mb: 3 }}>
+        <EmailSearch onSearch={handleSearch} />
+      </Box>
 
       <EmailList
         emails={emails}
@@ -204,8 +327,28 @@ const EmailsPage: React.FC = () => {
         onDelete={handleDeleteEmail}
       />
 
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>
-        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={refreshing}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
+      <Snackbar 
+        open={!!error} 
+        autoHideDuration={6000} 
+        onClose={handleCloseError}
+        TransitionComponent={Fade}
+      >
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          variant="filled"
+          sx={{ 
+            width: '100%',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+          }}
+        >
           {error}
         </Alert>
       </Snackbar>
