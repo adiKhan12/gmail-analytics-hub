@@ -40,6 +40,8 @@ async def get_current_user(db: Session = Depends(get_db)):
     return {
         "id": user.id,
         "email": user.email,
+        "name": user.name if hasattr(user, 'name') else user.email.split('@')[0],
+        "picture": user.picture if hasattr(user, 'picture') else None,
         "is_active": user.is_active
     }
 
@@ -119,15 +121,19 @@ async def google_auth_callback(
         # Use the credentials to create a Gmail service
         service = build('gmail', 'v1', credentials=credentials)
         
-        # Get user info
-        user_info = service.users().getProfile(userId='me').execute()
-        email = user_info.get('emailAddress')
+        # Get user info from Google
+        userinfo_service = build('oauth2', 'v2', credentials=credentials)
+        user_info = userinfo_service.userinfo().get().execute()
+        email = user_info.get('email')
         
-        # Store or update user in database
+        # Check if user exists
         user = db.query(User).filter(User.email == email).first()
+        
         if not user:
             user = User(
                 email=email,
+                name=user_info.get('name'),
+                picture=user_info.get('picture'),
                 google_credentials={
                     'token': credentials.token,
                     'refresh_token': credentials.refresh_token,
@@ -140,6 +146,8 @@ async def google_auth_callback(
             )
             db.add(user)
         else:
+            user.name = user_info.get('name')
+            user.picture = user_info.get('picture')
             user.google_credentials = {
                 'token': credentials.token,
                 'refresh_token': credentials.refresh_token,

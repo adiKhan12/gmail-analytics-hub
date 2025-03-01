@@ -1,7 +1,9 @@
 import { ThemeProvider, createTheme, CssBaseline, Box, CircularProgress } from '@mui/material';
 import Dashboard from './components/Dashboard';
+import EmailsPage from './components/EmailsPage';
 import Header from './components/Header';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 const theme = createTheme({
   palette: {
@@ -26,38 +28,44 @@ function AppContent() {
     );
   }
 
+  if (!user) {
+    return (
+      <Box 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        justifyContent="center" 
+        minHeight="80vh"
+        textAlign="center"
+        p={3}
+      >
+        <h1>Welcome to Email Planner</h1>
+        <p>Please sign in with your Google account to access your emails.</p>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      <Header />
-      {user ? (
-        <Dashboard />
-      ) : (
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center" 
-          minHeight="80vh"
-          textAlign="center"
-          p={3}
-        >
-          <h1>Welcome to Email Planner</h1>
-          <p>Please sign in with your Google account to access your emails.</p>
-        </Box>
-      )}
-    </Box>
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/emails" element={<EmailsPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AppContent />
+        <Router>
+          <Box>
+            <Header />
+            <AppContent />
+          </Box>
+        </Router>
       </ThemeProvider>
     </AuthProvider>
   );
 }
-
-export default App;

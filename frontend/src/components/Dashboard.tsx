@@ -28,6 +28,7 @@ import {
     Cell,
 } from 'recharts';
 import { getDashboardStats, syncEmails, analyzeEmails, EmailStats } from '../services/api';
+import { Link } from 'react-router-dom';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -171,6 +172,14 @@ export default function Dashboard() {
                             startIcon={syncing ? <CircularProgress size={20} color="inherit" /> : null}
                         >
                             {syncing ? 'Syncing...' : analyzing ? 'Analyzing...' : 'Sync Emails'}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            component={Link}
+                            to="/emails"
+                            sx={{ mt: 1 }}
+                        >
+                            Search & View Emails
                         </Button>
                         {(syncing || analyzing) && (
                             <Box sx={{ width: '100%' }}>

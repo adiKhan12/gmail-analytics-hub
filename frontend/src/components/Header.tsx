@@ -11,10 +11,12 @@ import {
     IconButton,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
 
-export default function Header() {
-    const { user, signIn, signOut } = useAuth();
+const Header: React.FC = () => {
+    const { user, signOut } = useAuth();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const location = useLocation();
 
     const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -25,8 +27,8 @@ export default function Header() {
     };
 
     const handleSignOut = () => {
-        handleClose();
         signOut();
+        handleClose();
     };
 
     return (
@@ -35,42 +37,75 @@ export default function Header() {
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     Email Planner
                 </Typography>
-                {user ? (
-                    <Box display="flex" alignItems="center" gap={2}>
-                        <Typography variant="body2">
-                            {user.email}
-                        </Typography>
+                {user && (
+                    <>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+                            <Button 
+                                color="inherit" 
+                                component={Link} 
+                                to="/"
+                                sx={{ 
+                                    fontWeight: location.pathname === '/' ? 'bold' : 'normal',
+                                    borderBottom: location.pathname === '/' ? '2px solid white' : 'none',
+                                    borderRadius: 0,
+                                    mx: 1
+                                }}
+                            >
+                                Dashboard
+                            </Button>
+                            <Button 
+                                color="inherit" 
+                                component={Link} 
+                                to="/emails"
+                                sx={{ 
+                                    fontWeight: location.pathname === '/emails' ? 'bold' : 'normal',
+                                    borderBottom: location.pathname === '/emails' ? '2px solid white' : 'none',
+                                    borderRadius: 0,
+                                    mx: 1
+                                }}
+                            >
+                                Emails
+                            </Button>
+                        </Box>
                         <IconButton
-                            onClick={handleMenu}
                             size="small"
-                            sx={{ ml: 2 }}
-                            aria-controls={Boolean(anchorEl) ? 'account-menu' : undefined}
-                            aria-haspopup="true"
-                            aria-expanded={Boolean(anchorEl) ? 'true' : undefined}
+                            onClick={handleMenu}
+                            color="inherit"
                         >
-                            <Avatar sx={{ width: 32, height: 32 }}>
-                                {user.email[0].toUpperCase()}
-                            </Avatar>
+                            <Avatar 
+                                alt={user.name || 'User'} 
+                                src={user.picture} 
+                                sx={{ width: 32, height: 32 }}
+                            />
                         </IconButton>
                         <Menu
-                            id="account-menu"
+                            id="menu-appbar"
                             anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            keepMounted
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
                             open={Boolean(anchorEl)}
                             onClose={handleClose}
-                            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                         >
-                            <MenuItem onClick={handleSignOut}>
-                                Sign Out
+                            <MenuItem disabled>
+                                {user.email}
                             </MenuItem>
+                            <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
                         </Menu>
-                    </Box>
-                ) : (
-                    <Button color="inherit" onClick={signIn}>
-                        Sign In with Google
-                    </Button>
+                    </>
+                )}
+                {!user && (
+                    <Button color="inherit" href="/api/v1/auth/login">Sign In</Button>
                 )}
             </Toolbar>
         </AppBar>
     );
-} 
+};
+
+export default Header; 

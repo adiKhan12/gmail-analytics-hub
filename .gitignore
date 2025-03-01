@@ -44,4 +44,4 @@ yarn-error.log*
 # Project specific
 data/
 *.db
-*.sqlite3 
+*.sqlite3 DEVELOPMENT_PAN.md

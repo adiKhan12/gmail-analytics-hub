@@ -6,6 +6,7 @@ from app.services.gmail import sync_emails
 from app.services.llm import analyze_email
 from typing import List, Optional
 import json
+from sqlalchemy import or_
 
 router = APIRouter()
 
@@ -124,10 +125,13 @@ async def list_emails(
     skip: int = 0,
     limit: int = 10,
     category: Optional[str] = None,
-    min_priority: Optional[int] = None
+    min_priority: Optional[int] = None,
+    search: Optional[str] = None,
+    sender: Optional[str] = None,
+    has_action_items: Optional[bool] = None
 ):
     """
-    List emails from local database with optional filters
+    List emails from local database with optional filters and search
     """
     user = db.query(User).first()
     if not user:
@@ -143,6 +147,22 @@ async def list_emails(
         query = query.filter(Email.category == category)
     if min_priority:
         query = query.filter(Email.priority_score >= min_priority)
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Email.subject.ilike(search_term),
+                Email.body_text.ilike(search_term),
+                Email.snippet.ilike(search_term)
+            )
+        )
+    if sender:
+        query = query.filter(Email.sender.ilike(f"%{sender}%"))
+    if has_action_items is not None:
+        if has_action_items:
+            query = query.filter(Email.action_items != '[]', Email.action_items.isnot(None))
+        else:
+            query = query.filter(or_(Email.action_items == '[]', Email.action_items.is_(None)))
     
     # Get total count before pagination
     total = query.count()
