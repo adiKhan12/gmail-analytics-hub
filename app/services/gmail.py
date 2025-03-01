@@ -1,5 +1,6 @@
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from sqlalchemy.orm import Session
 from app.models import User, Email
 from typing import Dict, Any
@@ -10,15 +11,19 @@ import json
 
 def create_gmail_service(credentials_dict: Dict[str, Any]) -> Any:
     """Create and return a Gmail service instance from stored credentials"""
-    credentials = Credentials(
-        token=credentials_dict['token'],
-        refresh_token=credentials_dict['refresh_token'],
-        token_uri=credentials_dict['token_uri'],
-        client_id=credentials_dict['client_id'],
-        client_secret=credentials_dict['client_secret'],
-        scopes=credentials_dict['scopes']
-    )
-    return build('gmail', 'v1', credentials=credentials)
+    try:
+        credentials = Credentials(
+            token=credentials_dict['token'],
+            refresh_token=credentials_dict['refresh_token'],
+            token_uri=credentials_dict['token_uri'],
+            client_id=credentials_dict['client_id'],
+            client_secret=credentials_dict['client_secret'],
+            scopes=credentials_dict['scopes']
+        )
+        return build('gmail', 'v1', credentials=credentials)
+    except Exception as e:
+        # Handle credential creation errors
+        raise Exception(f"Failed to create Gmail service: {str(e)}")
 
 def parse_email_body(payload):
     """Extract email body from Gmail API message payload"""
@@ -42,11 +47,26 @@ def sync_emails(db: Session, user: User, limit: int = 50) -> Dict[str, Any]:
         service = create_gmail_service(user.google_credentials)
         
         # Get list of emails
-        results = service.users().messages().list(
-            userId='me',
-            maxResults=limit,
-            q='in:inbox'  # Only sync inbox messages for now
-        ).execute()
+        try:
+            results = service.users().messages().list(
+                userId='me',
+                maxResults=limit,
+                q='in:inbox'  # Only sync inbox messages for now
+            ).execute()
+        except HttpError as e:
+            if 'invalid_grant' in str(e) or 'Token has been expired or revoked' in str(e):
+                # Clear credentials to force re-authentication
+                user.gmail_sync_enabled = False
+                db.commit()
+                return {
+                    "success": False,
+                    "error": f"Authentication token expired or revoked. Please re-authenticate: {str(e)}"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Gmail API error: {str(e)}"
+                }
         
         messages = results.get('messages', [])
         sync_count = 0
@@ -62,11 +82,16 @@ def sync_emails(db: Session, user: User, limit: int = 50) -> Dict[str, Any]:
                 continue
                 
             # Get full message details
-            msg = service.users().messages().get(
-                userId='me',
-                id=message['id'],
-                format='full'
-            ).execute()
+            try:
+                msg = service.users().messages().get(
+                    userId='me',
+                    id=message['id'],
+                    format='full'
+                ).execute()
+            except HttpError as e:
+                # Log error but continue with other messages
+                print(f"Error fetching message {message['id']}: {str(e)}")
+                continue
             
             # Parse headers
             headers = msg['payload']['headers']
@@ -86,7 +111,8 @@ def sync_emails(db: Session, user: User, limit: int = 50) -> Dict[str, Any]:
                 body_text=parse_email_body(msg['payload']),
                 labels=json.dumps(msg.get('labelIds', [])),
                 is_read='UNREAD' not in msg.get('labelIds', []),
-                is_important='IMPORTANT' in msg.get('labelIds', [])
+                is_important='IMPORTANT' in msg.get('labelIds', []),
+                created_at=datetime.utcnow().isoformat()  # Add created_at timestamp
             )
             
             db.add(new_email)

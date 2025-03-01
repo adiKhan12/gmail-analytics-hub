@@ -12,9 +12,10 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
+import GoogleIcon from '@mui/icons-material/Google';
 
 const Header: React.FC = () => {
-    const { user, signOut } = useAuth();
+    const { user, signIn, signOut } = useAuth();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const location = useLocation();
 
@@ -29,6 +30,10 @@ const Header: React.FC = () => {
     const handleSignOut = () => {
         signOut();
         handleClose();
+    };
+
+    const handleSignIn = () => {
+        signIn();
     };
 
     return (
@@ -101,7 +106,18 @@ const Header: React.FC = () => {
                     </>
                 )}
                 {!user && (
-                    <Button color="inherit" href="/api/v1/auth/login">Sign In</Button>
+                    <Button 
+                        variant="contained" 
+                        color="secondary" 
+                        onClick={handleSignIn}
+                        startIcon={<GoogleIcon />}
+                        sx={{ 
+                            fontWeight: 'bold',
+                            px: 2
+                        }}
+                    >
+                        Sign in with Google
+                    </Button>
                 )}
             </Toolbar>
         </AppBar>

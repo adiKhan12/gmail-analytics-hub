@@ -32,6 +32,7 @@ import { getDashboardStats, syncEmails, analyzeEmails, EmailStats, Email, listEm
 import { Link, useNavigate } from 'react-router-dom';
 import EmailDetail from './EmailDetail';
 import EmailDraftGenerator from './EmailDraftGenerator';
+import { useAuth } from '../context/AuthContext';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -72,6 +73,8 @@ export default function Dashboard() {
     const [detailOpen, setDetailOpen] = useState(false);
     const [draftMode, setDraftMode] = useState<'reply' | 'forward' | null>(null);
     const navigate = useNavigate();
+    const { signIn } = useAuth();
+    const [tokenExpired, setTokenExpired] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -113,6 +116,7 @@ export default function Dashboard() {
         setSyncing(true);
         setAnalyzing(false);
         setError(null);
+        setTokenExpired(false);
         setSyncProgress({ current: 0, total: 50 });
         setAnalysisProgress({ current: 0, total: 0 });
         
@@ -121,6 +125,16 @@ export default function Dashboard() {
             console.log('Starting email sync...');
             const syncResult = await syncEmails(50);
             console.log('Sync result:', syncResult);
+            
+            // Check for token expiration error
+            if (!syncResult.success && syncResult.error && 
+                (syncResult.error.includes('invalid_grant') || 
+                 syncResult.error.includes('Token has been expired or revoked'))) {
+                setTokenExpired(true);
+                setSyncing(false);
+                return;
+            }
+            
             setSyncProgress({ current: syncResult.emails_synced, total: syncResult.total_messages });
             
             // Get current stats to know how many unanalyzed emails we have
@@ -149,14 +163,16 @@ export default function Dashboard() {
                     : `Successfully synced ${syncResult.emails_synced} emails. No new emails to analyze.`
             );
         } catch (error) {
-            console.error('Error during sync process:', error);
+            console.error('Error during sync/analysis:', error);
             setError('Failed to sync or analyze emails. Please try again.');
         } finally {
             setSyncing(false);
             setAnalyzing(false);
-            setSyncProgress({ current: 0, total: 0 });
-            setAnalysisProgress({ current: 0, total: 0 });
         }
+    };
+
+    const handleReauthenticate = () => {
+        signIn();
     };
 
     useEffect(() => {
@@ -559,6 +575,25 @@ export default function Dashboard() {
                     {success}
                 </Alert>
             </Snackbar>
+
+            {/* Token Expired Alert */}
+            {tokenExpired && (
+                <Alert 
+                    severity="warning" 
+                    sx={{ mt: 2, mb: 2 }}
+                    action={
+                        <Button 
+                            color="inherit" 
+                            size="small" 
+                            onClick={handleReauthenticate}
+                        >
+                            Re-authenticate
+                        </Button>
+                    }
+                >
+                    Your Google authentication has expired or been revoked. Please re-authenticate to continue using the application.
+                </Alert>
+            )}
 
             {/* Email Detail Dialog */}
             {selectedEmail && (

@@ -54,6 +54,7 @@ Email Planner is a modern email management system that helps you organize, analy
 - Node.js 16+
 - Google Cloud Platform account
 - DeepSeek API account
+- Docker and Docker Compose (for containerized deployment)
 
 ### Installation
 
@@ -106,6 +107,8 @@ Email Planner is a modern email management system that helps you organize, analy
 
 ### Running the Application
 
+#### Option 1: Local Development
+
 1. Start the backend server:
    ```bash
    # From the root directory
@@ -119,6 +122,56 @@ Email Planner is a modern email management system that helps you organize, analy
    ```
 
 3. Open your browser and navigate to `http://localhost:5173`
+
+#### Option 2: Docker Deployment
+
+1. Make sure Docker and Docker Compose are installed on your system.
+
+2. Update your `.env` file with the necessary credentials.
+
+3. Build and start the containers:
+   ```bash
+   docker-compose up -d
+   ```
+
+4. Access the application at `http://localhost`
+
+5. To stop the containers:
+   ```bash
+   docker-compose down
+   ```
+
+6. To view logs:
+   ```bash
+   docker-compose logs -f
+   ```
+
+#### Option 3: Docker Development Environment
+
+For development with hot-reloading in Docker:
+
+1. Make sure Docker and Docker Compose are installed on your system.
+
+2. Update your `.env` file with the necessary credentials.
+
+3. Run the development setup script:
+   ```bash
+   ./docker-dev.sh
+   ```
+   
+   Or manually start the development containers:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+4. Access the application at `http://localhost:5173`
+
+5. Changes to the frontend code in the `frontend/src` directory and backend code in the `app` directory will automatically trigger hot-reloading.
+
+6. To stop the development containers:
+   ```bash
+   docker-compose -f docker-compose.dev.yml down
+   ```
 
 ## Usage
 
@@ -169,6 +222,39 @@ Email Planner leverages the DeepSeek API to provide advanced AI features:
    - Client-side draft generation when offline or API unavailable
    - Graceful degradation of AI features
    - Preserves core functionality in all conditions
+
+## Docker Deployment Details
+
+The application is containerized using Docker with the following components:
+
+1. **Backend Container**:
+   - Python 3.11 with FastAPI
+   - Exposes port 8000
+   - Persists data using a volume mount for the SQLite database
+
+2. **Frontend Container**:
+   - Node.js for building the React application
+   - Nginx for serving the static files
+   - Exposes port 80
+   - Proxies API requests to the backend service
+
+3. **Docker Compose**:
+   - Orchestrates both containers
+   - Sets up networking between services
+   - Manages volume mounts for data persistence
+   - Configures environment variables
+
+4. **Development Environment**:
+   - Uses the development server for both frontend and backend
+   - Enables hot-reloading for faster development
+   - Mounts source code directories as volumes
+   - Provides a more developer-friendly experience
+
+5. **Production Considerations**:
+   - For production deployment, consider using a proper database like PostgreSQL
+   - Set up HTTPS with a reverse proxy like Traefik or Nginx
+   - Implement proper logging and monitoring
+   - Use Docker secrets for sensitive information
 
 ## Contributing
 

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: email-planner-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+      - ./app:/app/app  # Mount app directory for live reloading
+    environment:
+      - DATABASE_URL=sqlite:///data/email_planner.db
+      - FRONTEND_URL=http://localhost:5173
+      - GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/callback/google
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - email-planner-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.dev
+    container_name: email-planner-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src  # Mount src directory for live reloading
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api/v1
+    networks:
+      - email-planner-network
+
+volumes:
+  data:
+    driver: local
+
+networks:
+  email-planner-network:
+    driver: bridge

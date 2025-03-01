@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
         try {
             // Try to get user info from the backend
-            const response = await fetch(`${API_BASE_URL}/auth/me`);
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                credentials: 'include',
+            });
             if (response.ok) {
                 const userData = await response.json();
                 setUser(userData);
@@ -51,7 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const signIn = async () => {
         try {
             // Get the authorization URL from the backend
-            const response = await fetch(`${API_BASE_URL}/auth/login/google`);
+            const response = await fetch(`${API_BASE_URL}/auth/login/google`, {
+                credentials: 'include',
+            });
             const { authorization_url } = await response.json();
             
             // Redirect to Google OAuth
@@ -65,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             await fetch(`${API_BASE_URL}/auth/logout`, {
                 method: 'POST',
+                credentials: 'include',
             });
             setUser(null);
         } catch (error) {
