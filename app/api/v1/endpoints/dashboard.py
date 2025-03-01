@@ -74,11 +74,17 @@ async def get_dashboard_stats(
         Email.action_items.isnot(None)
     ).order_by(desc(Email.created_at)).limit(5).all()
     
+    # Count of analyzed emails (emails with category assigned)
+    analyzed_emails_count = db.query(Email).filter(
+        Email.user_id == user.id,
+        Email.category.isnot(None)
+    ).count()
+    
     return {
         "overview": {
             "total_emails": total_emails,
             "unread_emails": unread_emails,
-            "analyzed_emails": len([e for e in category_stats if e.category]),
+            "analyzed_emails": analyzed_emails_count,
             "last_sync": user.last_sync_timestamp
         },
         "categories": {
