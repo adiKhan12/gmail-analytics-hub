@@ -7,6 +7,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
 
 export interface EmailStats {
@@ -92,7 +93,9 @@ export interface DraftResponse {
 
 export async function getDashboardStats(): Promise<EmailStats> {
     try {
-        const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+        const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -113,6 +116,7 @@ export async function syncEmails(limit: number = 50): Promise<any> {
     try {
         const response = await fetch(`${API_BASE_URL}/emails/sync?limit=${limit}`, {
             method: 'POST',
+            credentials: 'include',
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -128,6 +132,7 @@ export async function analyzeEmails(limit: number = 50): Promise<any> {
     try {
         const response = await fetch(`${API_BASE_URL}/emails/analyze?limit=${limit}`, {
             method: 'POST',
+            credentials: 'include',
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -152,7 +157,9 @@ export async function listEmails(filters: SearchFilters): Promise<EmailListRespo
         if (filters.skip !== undefined) params.append('skip', filters.skip.toString());
         if (filters.limit !== undefined) params.append('limit', filters.limit.toString());
         
-        const response = await fetch(`${API_BASE_URL}/emails/list?${params.toString()}`);
+        const response = await fetch(`${API_BASE_URL}/emails/list?${params.toString()}`, {
+            credentials: 'include',
+        });
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -179,6 +186,7 @@ export async function generateEmailDraft(request: DraftRequest): Promise<DraftRe
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify(request),
         });
         
@@ -203,6 +211,7 @@ export async function markEmailAsRead(emailId: string): Promise<{ success: boole
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -226,6 +235,7 @@ export async function toggleEmailImportance(emailId: string, isImportant: boolea
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
         
         if (!response.ok) {
@@ -249,6 +259,7 @@ export async function deleteEmail(emailId: string): Promise<{ success: boolean; 
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
         
         if (!response.ok) {
