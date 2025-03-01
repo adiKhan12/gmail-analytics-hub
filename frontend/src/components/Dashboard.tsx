@@ -32,6 +32,30 @@ import { Link } from 'react-router-dom';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+// Category color mapping for the legend
+const CATEGORY_COLORS = {
+    'Work': '#0088FE',
+    'Personal': '#00C49F',
+    'Newsletter': '#FFBB28',
+    'Promotional': '#FF8042',
+    'Social': '#8884D8',
+    'Other': '#A9A9A9'  // Default for other categories
+};
+
+// Priority color mapping and descriptions
+interface PriorityInfo {
+    color: string;
+    description: string;
+}
+
+const PRIORITY_COLORS: Record<string, PriorityInfo> = {
+    '1': { color: '#4caf50', description: 'Low - Can be handled later' },
+    '2': { color: '#8bc34a', description: 'Low-Medium - Handle when convenient' },
+    '3': { color: '#ff9800', description: 'Medium - Should be addressed soon' },
+    '4': { color: '#f44336', description: 'High - Requires prompt attention' },
+    '5': { color: '#d32f2f', description: 'Critical - Urgent action needed' },
+};
+
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<EmailStats | null>(null);
@@ -253,25 +277,58 @@ export default function Dashboard() {
                         <Typography variant="h6" gutterBottom>
                             Category Distribution
                         </Typography>
-                        <Box height={300}>
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <Pie
-                                        data={categoryData}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={100}
-                                        label
+                        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
+                            <Box height={300} width={{ xs: '100%', md: '70%' }}>
+                                <ResponsiveContainer>
+                                    <PieChart>
+                                        <Pie
+                                            data={categoryData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={100}
+                                            label
+                                        >
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </Box>
+                            <Box 
+                                width={{ xs: '100%', md: '30%' }} 
+                                display="flex" 
+                                flexDirection="column" 
+                                justifyContent="center"
+                                pl={{ xs: 0, md: 2 }}
+                                mt={{ xs: 2, md: 0 }}
+                            >
+                                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                    Category Legend
+                                </Typography>
+                                {categoryData.map((category, index) => (
+                                    <Box 
+                                        key={`legend-${index}`} 
+                                        display="flex" 
+                                        alignItems="center" 
+                                        mb={1}
                                     >
-                                        {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </PieChart>
-                            </ResponsiveContainer>
+                                        <Box 
+                                            width={16} 
+                                            height={16} 
+                                            bgcolor={COLORS[index % COLORS.length]} 
+                                            mr={1} 
+                                            borderRadius="50%" 
+                                        />
+                                        <Typography variant="body2">
+                                            {category.name} ({category.value})
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </Box>
                         </Box>
                     </Paper>
                 </Grid>
@@ -282,16 +339,60 @@ export default function Dashboard() {
                         <Typography variant="h6" gutterBottom>
                             Priority Distribution
                         </Typography>
-                        <Box height={300}>
-                            <ResponsiveContainer>
-                                <BarChart data={priorityData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar dataKey="value" fill="#8884d8" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
+                            <Box height={300} width={{ xs: '100%', md: '70%' }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={priorityData}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip />
+                                        <Bar dataKey="value">
+                                            {priorityData.map((entry, index) => {
+                                                const priorityLevel = entry.name.split(' ')[1];
+                                                const color = PRIORITY_COLORS[priorityLevel]?.color || '#8884d8';
+                                                return <Cell key={`cell-${index}`} fill={color} />;
+                                            })}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </Box>
+                            <Box 
+                                width={{ xs: '100%', md: '30%' }} 
+                                display="flex" 
+                                flexDirection="column" 
+                                justifyContent="center"
+                                pl={{ xs: 0, md: 2 }}
+                                mt={{ xs: 2, md: 0 }}
+                            >
+                                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                    Priority Legend
+                                </Typography>
+                                {Object.entries(PRIORITY_COLORS).map(([level, { color, description }]) => (
+                                    <Box 
+                                        key={`priority-legend-${level}`} 
+                                        display="flex" 
+                                        alignItems="flex-start" 
+                                        mb={1}
+                                    >
+                                        <Box 
+                                            width={16} 
+                                            height={16} 
+                                            bgcolor={color} 
+                                            mr={1} 
+                                            mt={0.5}
+                                        />
+                                        <Box>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Priority {level}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {description}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                ))}
+                            </Box>
                         </Box>
                     </Paper>
                 </Grid>
