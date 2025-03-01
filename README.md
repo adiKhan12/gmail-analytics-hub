@@ -6,12 +6,27 @@ Email Planner is a modern email management system that helps you organize, analy
 
 - 🔒 Secure Google OAuth2 Authentication
 - 📊 Interactive Dashboard with Email Analytics
+  - Email volume trends
+  - Category distribution visualization
+  - Priority and sentiment breakdowns
+  - High-priority email highlights
+- 🔍 Advanced Email Search & Filtering
+  - Search by keywords, sender, or content
+  - Filter by category, priority level, and action items
+  - Save and manage search filters
+  - Real-time results updating
 - 🤖 AI-Powered Email Analysis
   - Automatic Categorization
-  - Priority Scoring
-  - Sentiment Analysis
+  - Priority Scoring (1-5 scale)
+  - Sentiment Analysis (Positive/Neutral/Negative)
   - Action Item Extraction
   - Email Summarization
+- ✍️ Intelligent Draft Generation
+  - AI-powered email replies and forwards
+  - Context-aware response generation
+  - Customizable with user instructions
+  - Fallback generation when offline
+  - Edit before sending
 - 📈 Real-time Progress Tracking
 - 📱 Responsive Material-UI Design
 
@@ -110,13 +125,50 @@ Email Planner is a modern email management system that helps you organize, analy
 1. Sign in with your Google account
 2. Click "Sync Emails" to start importing and analyzing your emails
 3. View email statistics and insights in the dashboard
-4. Monitor real-time progress of email synchronization and analysis
+4. Navigate to the Emails page to search and filter your emails:
+   - Use the search bar for keyword searches
+   - Apply filters for category, priority, sender, and action items
+   - Click on an email to view its details
+5. When viewing an email, you can:
+   - Mark as read/unread
+   - Toggle importance
+   - View AI-generated summary and extracted action items
+   - See sentiment analysis and priority score
+6. Use the AI-powered draft generation:
+   - Click "Reply" or "Forward" when viewing an email
+   - Optionally provide specific instructions (e.g., "Politely decline" or "Ask for more details")
+   - Review and edit the generated draft
+   - Click "Regenerate" to create a new version
+   - Send or save the draft when ready
 
 ## API Documentation
 
 Once the backend is running, you can access:
 - Interactive API docs: `http://localhost:8000/docs`
 - OpenAPI specification: `http://localhost:8000/openapi.json`
+
+## AI Capabilities
+
+Email Planner leverages the DeepSeek API to provide advanced AI features:
+
+1. **Email Analysis**
+   - Automatically categorizes emails (Work, Personal, Newsletter, etc.)
+   - Assigns priority scores based on urgency and importance
+   - Detects sentiment to identify positive, neutral, or negative messages
+   - Extracts action items that require your attention
+   - Generates concise summaries of lengthy emails
+
+2. **Draft Generation**
+   - Creates contextually appropriate email replies and forwards
+   - Analyzes the original email's content, tone, and purpose
+   - Addresses specific questions or requests from the original email
+   - Incorporates user instructions for customized responses
+   - Maintains professional tone and formatting
+
+3. **Fallback Capabilities**
+   - Client-side draft generation when offline or API unavailable
+   - Graceful degradation of AI features
+   - Preserves core functionality in all conditions
 
 ## Contributing
 
