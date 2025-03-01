@@ -15,6 +15,7 @@ import {
     Snackbar,
     Alert,
     LinearProgress,
+    Avatar,
 } from '@mui/material';
 import {
     BarChart,
@@ -33,6 +34,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import EmailDetail from './EmailDetail';
 import EmailDraftGenerator from './EmailDraftGenerator';
 import { useAuth } from '../context/AuthContext';
+import EmailIcon from '@mui/icons-material/Email';
+import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import SyncIcon from '@mui/icons-material/Sync';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SearchIcon from '@mui/icons-material/Search';
+import CloudSyncIcon from '@mui/icons-material/CloudSync';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+import FlagIcon from '@mui/icons-material/Flag';
+import PersonIcon from '@mui/icons-material/Person';
+import SubjectIcon from '@mui/icons-material/Subject';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import CategoryIcon from '@mui/icons-material/Category';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -268,105 +287,316 @@ export default function Dashboard() {
         value: count,
     })) : [];
 
+    const getPriorityColor = (score: number) => {
+        if (score >= 8) return '#f44336'; // High priority - red
+        if (score >= 5) return '#ff9800'; // Medium priority - orange
+        return '#4caf50'; // Low priority - green
+    };
+
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                <Typography variant="h4" component="h1">
-                    Email Dashboard
-                </Typography>
-                <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
-                    {loading && <CircularProgress size={24} />}
-                    <Box display="flex" flexDirection="column" gap={1} minWidth={200}>
-                        <Button
-                            variant="contained"
-                            onClick={handleSync}
-                            disabled={syncing || analyzing}
-                            startIcon={syncing ? <CircularProgress size={20} color="inherit" /> : null}
+            <Box 
+                display="flex" 
+                justifyContent="space-between" 
+                alignItems="center" 
+                mb={4}
+                flexDirection={{ xs: 'column', sm: 'row' }}
+                gap={2}
+            >
+                <Box>
+                    <Typography 
+                        variant="h4" 
+                        component="h1" 
+                        sx={{ 
+                            fontWeight: 'bold',
+                            background: 'linear-gradient(45deg, #1976d2 30%, #21CBF3 90%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}
+                    >
+                        Email Dashboard
+                    </Typography>
+                    <Typography 
+                        variant="subtitle1" 
+                        color="text.secondary"
+                        sx={{ mt: 0.5 }}
+                    >
+                        {stats?.overview.last_sync 
+                            ? `Last updated: ${new Date(stats.overview.last_sync).toLocaleString()}` 
+                            : 'No sync data available'}
+                    </Typography>
+                </Box>
+                
+                <Box 
+                    display="flex" 
+                    flexDirection="column" 
+                    alignItems={{ xs: 'stretch', sm: 'flex-end' }} 
+                    gap={1.5}
+                    width={{ xs: '100%', sm: 'auto' }}
+                >
+                    {loading && (
+                        <Box display="flex" justifyContent="center" mb={1}>
+                            <CircularProgress size={24} />
+                        </Box>
+                    )}
+                    
+                    <Button
+                        variant="contained"
+                        onClick={handleSync}
+                        disabled={syncing || analyzing}
+                        startIcon={syncing ? <CircularProgress size={20} color="inherit" /> : <CloudSyncIcon />}
+                        sx={{ 
+                            borderRadius: 2,
+                            py: 1,
+                            boxShadow: 2,
+                            background: syncing || analyzing 
+                                ? 'linear-gradient(45deg, #1976d2 30%, #21CBF3 90%)'
+                                : 'linear-gradient(45deg, #1976d2 30%, #21CBF3 90%)',
+                            '&:hover': {
+                                background: 'linear-gradient(45deg, #1565c0 30%, #0ca8cd 90%)',
+                                boxShadow: 3,
+                            }
+                        }}
+                        fullWidth
+                    >
+                        {syncing ? 'Syncing Emails...' : analyzing ? 'Analyzing Emails...' : 'Sync & Analyze Emails'}
+                    </Button>
+                    
+                    <Button
+                        variant="outlined"
+                        component={Link}
+                        to="/emails"
+                        startIcon={<SearchIcon />}
+                        sx={{ 
+                            borderRadius: 2,
+                            py: 1,
+                            borderColor: '#1976d2',
+                            color: '#1976d2',
+                            '&:hover': {
+                                borderColor: '#1565c0',
+                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                            }
+                        }}
+                        fullWidth
+                    >
+                        Search & View Emails
+                    </Button>
+                    
+                    {(syncing || analyzing) && (
+                        <Paper 
+                            elevation={1} 
+                            sx={{ 
+                                p: 1.5, 
+                                width: '100%', 
+                                borderRadius: 2,
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                backdropFilter: 'blur(4px)',
+                            }}
                         >
-                            {syncing ? 'Syncing...' : analyzing ? 'Analyzing...' : 'Sync Emails'}
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            component={Link}
-                            to="/emails"
-                            sx={{ mt: 1 }}
-                        >
-                            Search & View Emails
-                        </Button>
-                        {(syncing || analyzing) && (
-                            <Box sx={{ width: '100%' }}>
-                                {syncing && (
-                                    <>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Syncing: {syncProgress.current}/{syncProgress.total} emails
+                            {syncing && (
+                                <>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            Syncing Emails
                                         </Typography>
-                                        <LinearProgress 
-                                            variant="determinate" 
-                                            value={(syncProgress.current / syncProgress.total) * 100} 
-                                        />
-                                    </>
-                                )}
-                                {analyzing && (
-                                    <>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Analyzing: {analysisProgress.current}/{analysisProgress.total} emails
+                                        <Typography variant="body2" color="primary">
+                                            {syncProgress.current}/{syncProgress.total}
                                         </Typography>
-                                        <LinearProgress 
-                                            variant="determinate" 
-                                            value={(analysisProgress.current / analysisProgress.total) * 100} 
-                                        />
-                                    </>
-                                )}
-                            </Box>
-                        )}
-                    </Box>
+                                    </Box>
+                                    <LinearProgress 
+                                        variant="determinate" 
+                                        value={(syncProgress.current / syncProgress.total) * 100}
+                                        sx={{ 
+                                            height: 8, 
+                                            borderRadius: 4,
+                                            mb: 1,
+                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                            '& .MuiLinearProgress-bar': {
+                                                backgroundColor: '#1976d2',
+                                            }
+                                        }}
+                                    />
+                                </>
+                            )}
+                            {analyzing && (
+                                <>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            Analyzing Emails
+                                        </Typography>
+                                        <Typography variant="body2" color="primary">
+                                            {analysisProgress.current}/{analysisProgress.total}
+                                        </Typography>
+                                    </Box>
+                                    <LinearProgress 
+                                        variant="determinate" 
+                                        value={(analysisProgress.current / analysisProgress.total) * 100}
+                                        sx={{ 
+                                            height: 8, 
+                                            borderRadius: 4,
+                                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                            '& .MuiLinearProgress-bar': {
+                                                backgroundColor: '#4caf50',
+                                            }
+                                        }}
+                                    />
+                                </>
+                            )}
+                        </Paper>
+                    )}
                 </Box>
             </Box>
 
             <Grid container spacing={3}>
                 {/* Overview Stats */}
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper 
+                        elevation={2}
+                        sx={{ 
+                            p: 3, 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            height: '100%',
+                            borderRadius: 2,
+                            background: 'linear-gradient(to bottom, #ffffff, #f5f8ff)'
+                        }}
+                    >
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{ 
+                                fontWeight: 'bold',
+                                pb: 1,
+                                borderBottom: '1px solid #eaeaea'
+                            }}
+                        >
                             Overview
                         </Typography>
-                        <List>
-                            <ListItem>
-                                <ListItemText
-                                    primary="Total Emails"
-                                    secondary={stats?.overview.total_emails}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemText
-                                    primary="Unread Emails"
-                                    secondary={stats?.overview.unread_emails}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemText
-                                    primary="Analyzed Emails"
-                                    secondary={stats?.overview.analyzed_emails}
-                                />
-                            </ListItem>
-                            <ListItem>
-                                <ListItemText
-                                    primary="Last Sync"
-                                    secondary={stats?.overview.last_sync ? new Date(stats.overview.last_sync).toLocaleString() : 'Never'}
-                                />
-                            </ListItem>
-                        </List>
+                        
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar 
+                                    sx={{ 
+                                        bgcolor: 'primary.main', 
+                                        width: 40, 
+                                        height: 40,
+                                        mr: 2
+                                    }}
+                                >
+                                    <EmailIcon />
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Total Emails
+                                    </Typography>
+                                    <Typography variant="h5" fontWeight="medium">
+                                        {stats?.overview.total_emails || 0}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar 
+                                    sx={{ 
+                                        bgcolor: '#ff9800', 
+                                        width: 40, 
+                                        height: 40,
+                                        mr: 2
+                                    }}
+                                >
+                                    <MarkEmailUnreadIcon />
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Unread Emails
+                                    </Typography>
+                                    <Typography variant="h5" fontWeight="medium">
+                                        {stats?.overview.unread_emails || 0}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar 
+                                    sx={{ 
+                                        bgcolor: '#4caf50', 
+                                        width: 40, 
+                                        height: 40,
+                                        mr: 2
+                                    }}
+                                >
+                                    <AnalyticsIcon />
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Analyzed Emails
+                                    </Typography>
+                                    <Typography variant="h5" fontWeight="medium">
+                                        {stats?.overview.analyzed_emails || 0}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Avatar 
+                                    sx={{ 
+                                        bgcolor: '#9c27b0', 
+                                        width: 40, 
+                                        height: 40,
+                                        mr: 2
+                                    }}
+                                >
+                                    <SyncIcon />
+                                </Avatar>
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Last Sync
+                                    </Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {stats?.overview.last_sync ? new Date(stats.overview.last_sync).toLocaleString() : 'Never'}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
                     </Paper>
                 </Grid>
 
                 {/* Category Distribution */}
                 <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper 
+                        elevation={2}
+                        sx={{ 
+                            p: 2.5, 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            borderRadius: 2,
+                            background: 'linear-gradient(to bottom, #ffffff, #f8f9ff)'
+                        }}
+                    >
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{ 
+                                fontWeight: 'bold',
+                                pb: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #eaeaea'
+                            }}
+                        >
+                            <PieChartIcon sx={{ mr: 1, color: '#673ab7' }} />
                             Category Distribution
                         </Typography>
                         <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
-                            <Box height={300} width={{ xs: '100%', md: '70%' }}>
+                            <Box 
+                                height={300} 
+                                width={{ xs: '100%', md: '70%' }}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
                                 <ResponsiveContainer>
                                     <PieChart>
                                         <Pie
@@ -377,12 +607,26 @@ export default function Dashboard() {
                                             cy="50%"
                                             outerRadius={100}
                                             label
+                                            labelLine={false}
+                                            animationDuration={800}
+                                            animationBegin={0}
                                         >
                                             {categoryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                <Cell 
+                                                    key={`cell-${index}`} 
+                                                    fill={COLORS[index % COLORS.length]} 
+                                                    stroke="#ffffff"
+                                                    strokeWidth={2}
+                                                />
                                             ))}
                                         </Pie>
-                                        <Tooltip />
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                borderRadius: 8, 
+                                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                                border: 'none'
+                                            }} 
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </Box>
@@ -393,29 +637,56 @@ export default function Dashboard() {
                                 justifyContent="center"
                                 pl={{ xs: 0, md: 2 }}
                                 mt={{ xs: 2, md: 0 }}
+                                sx={{
+                                    borderLeft: { xs: 'none', md: '1px solid #eaeaea' },
+                                    paddingLeft: { xs: 0, md: 3 }
+                                }}
                             >
-                                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                <Typography 
+                                    variant="subtitle1" 
+                                    gutterBottom 
+                                    fontWeight="bold"
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <CategoryIcon sx={{ mr: 1, fontSize: '0.9rem', color: 'text.secondary' }} />
                                     Category Legend
                                 </Typography>
-                                {categoryData.map((category, index) => (
-                                    <Box 
-                                        key={`legend-${index}`} 
-                                        display="flex" 
-                                        alignItems="center" 
-                                        mb={1}
-                                    >
+                                <Box sx={{ maxHeight: 220, overflow: 'auto', pr: 1 }}>
+                                    {categoryData.map((category, index) => (
                                         <Box 
-                                            width={16} 
-                                            height={16} 
-                                            bgcolor={COLORS[index % COLORS.length]} 
-                                            mr={1} 
-                                            borderRadius="50%" 
-                                        />
-                                        <Typography variant="body2">
-                                            {category.name} ({category.value})
-                                        </Typography>
-                                    </Box>
-                                ))}
+                                            key={`legend-${index}`} 
+                                            display="flex" 
+                                            alignItems="center" 
+                                            mb={1.5}
+                                            sx={{
+                                                transition: 'transform 0.2s',
+                                                '&:hover': {
+                                                    transform: 'translateX(5px)'
+                                                }
+                                            }}
+                                        >
+                                            <Box 
+                                                width={16} 
+                                                height={16} 
+                                                bgcolor={COLORS[index % COLORS.length]} 
+                                                mr={1.5} 
+                                                borderRadius="50%" 
+                                                sx={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                                            />
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {category.name}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {category.value} emails
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
                             </Box>
                         </Box>
                     </Paper>
@@ -423,23 +694,78 @@ export default function Dashboard() {
 
                 {/* Priority Distribution */}
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper 
+                        elevation={2}
+                        sx={{ 
+                            p: 2.5, 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            borderRadius: 2,
+                            background: 'linear-gradient(to bottom, #ffffff, #fff8f5)'
+                        }}
+                    >
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{ 
+                                fontWeight: 'bold',
+                                pb: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #eaeaea'
+                            }}
+                        >
+                            <BarChartIcon sx={{ mr: 1, color: '#ff5722' }} />
                             Priority Distribution
                         </Typography>
                         <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }}>
-                            <Box height={300} width={{ xs: '100%', md: '70%' }}>
+                            <Box 
+                                height={300} 
+                                width={{ xs: '100%', md: '70%' }}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
                                 <ResponsiveContainer>
-                                    <BarChart data={priorityData}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip />
-                                        <Bar dataKey="value">
+                                    <BarChart 
+                                        data={priorityData}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                        <XAxis 
+                                            dataKey="name" 
+                                            tick={{ fill: '#666', fontSize: 12 }}
+                                            axisLine={{ stroke: '#e0e0e0' }}
+                                        />
+                                        <YAxis 
+                                            tick={{ fill: '#666', fontSize: 12 }}
+                                            axisLine={{ stroke: '#e0e0e0' }}
+                                        />
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                borderRadius: 8, 
+                                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                                border: 'none'
+                                            }}
+                                        />
+                                        <Bar 
+                                            dataKey="value" 
+                                            radius={[4, 4, 0, 0]}
+                                            animationDuration={1500}
+                                        >
                                             {priorityData.map((entry, index) => {
                                                 const priorityLevel = entry.name.split(' ')[1];
                                                 const color = PRIORITY_COLORS[priorityLevel]?.color || '#8884d8';
-                                                return <Cell key={`cell-${index}`} fill={color} />;
+                                                return (
+                                                    <Cell 
+                                                        key={`cell-${index}`} 
+                                                        fill={color} 
+                                                        stroke="white"
+                                                        strokeWidth={1}
+                                                    />
+                                                );
                                             })}
                                         </Bar>
                                     </BarChart>
@@ -452,34 +778,57 @@ export default function Dashboard() {
                                 justifyContent="center"
                                 pl={{ xs: 0, md: 2 }}
                                 mt={{ xs: 2, md: 0 }}
+                                sx={{
+                                    borderLeft: { xs: 'none', md: '1px solid #eaeaea' },
+                                    paddingLeft: { xs: 0, md: 3 }
+                                }}
                             >
-                                <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                <Typography 
+                                    variant="subtitle1" 
+                                    gutterBottom 
+                                    fontWeight="bold"
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <FlagCircleIcon sx={{ mr: 1, fontSize: '0.9rem', color: 'text.secondary' }} />
                                     Priority Legend
                                 </Typography>
-                                {Object.entries(PRIORITY_COLORS).map(([level, { color, description }]) => (
-                                    <Box 
-                                        key={`priority-legend-${level}`} 
-                                        display="flex" 
-                                        alignItems="flex-start" 
-                                        mb={1}
-                                    >
+                                <Box sx={{ maxHeight: 220, overflow: 'auto', pr: 1 }}>
+                                    {Object.entries(PRIORITY_COLORS).map(([level, { color, description }]) => (
                                         <Box 
-                                            width={16} 
-                                            height={16} 
-                                            bgcolor={color} 
-                                            mr={1} 
-                                            mt={0.5}
-                                        />
-                                        <Box>
-                                            <Typography variant="body2" fontWeight="bold">
-                                                Priority {level}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {description}
-                                            </Typography>
+                                            key={`priority-legend-${level}`} 
+                                            display="flex" 
+                                            alignItems="flex-start" 
+                                            mb={1.5}
+                                            sx={{
+                                                transition: 'transform 0.2s',
+                                                '&:hover': {
+                                                    transform: 'translateX(5px)'
+                                                }
+                                            }}
+                                        >
+                                            <Box 
+                                                width={16} 
+                                                height={16} 
+                                                bgcolor={color} 
+                                                mr={1.5} 
+                                                mt={0.5}
+                                                borderRadius="2px"
+                                                sx={{ boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                                            />
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    Priority {level}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {description}
+                                                </Typography>
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                ))}
+                                    ))}
+                                </Box>
                             </Box>
                         </Box>
                     </Paper>
@@ -487,35 +836,97 @@ export default function Dashboard() {
 
                 {/* High Priority Emails */}
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '300px' }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper 
+                        elevation={2}
+                        sx={{ 
+                            p: 2.5, 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            height: '300px',
+                            borderRadius: 2,
+                            background: 'linear-gradient(to bottom, #ffffff, #fff5f5)'
+                        }}
+                    >
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{ 
+                                fontWeight: 'bold',
+                                pb: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #eaeaea'
+                            }}
+                        >
+                            <PriorityHighIcon sx={{ mr: 1, color: '#f44336' }} />
                             High Priority Emails
                         </Typography>
                         <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
-                            <List>
+                            <List sx={{ py: 0 }}>
                                 {stats?.high_priority && stats.high_priority.length > 0 ? (
                                     stats.high_priority.map((email) => (
                                         <React.Fragment key={email.id}>
-                                            <ListItemButton onClick={() => handleViewEmail(email.id)}>
+                                            <ListItemButton 
+                                                onClick={() => handleViewEmail(email.id)}
+                                                sx={{
+                                                    borderRadius: 1,
+                                                    my: 0.5,
+                                                    transition: 'all 0.2s',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(244, 67, 54, 0.08)',
+                                                    }
+                                                }}
+                                            >
+                                                <Box 
+                                                    sx={{ 
+                                                        minWidth: 40, 
+                                                        display: 'flex', 
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <Avatar 
+                                                        sx={{ 
+                                                            width: 32, 
+                                                            height: 32, 
+                                                            bgcolor: getPriorityColor(email.priority_score)
+                                                        }}
+                                                    >
+                                                        <FlagIcon fontSize="small" />
+                                                    </Avatar>
+                                                </Box>
                                                 <ListItemText
                                                     primary={
-                                                        <Typography noWrap variant="body1">
-                                                            {email.subject}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <SubjectIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', opacity: 0.7 }} />
+                                                            <Typography noWrap variant="body1" fontWeight="medium">
+                                                                {email.subject}
+                                                            </Typography>
+                                                        </Box>
                                                     }
                                                     secondary={
-                                                        <Typography noWrap variant="body2" color="text.secondary">
-                                                            From: {email.sender} | Priority: {email.priority_score}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <PersonIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', opacity: 0.7 }} />
+                                                            <Typography noWrap variant="body2" color="text.secondary">
+                                                                {email.sender} | Score: {email.priority_score}
+                                                            </Typography>
+                                                        </Box>
                                                     }
+                                                    sx={{ ml: 1 }}
                                                 />
                                             </ListItemButton>
-                                            <Divider />
+                                            <Divider variant="inset" component="li" sx={{ ml: 7 }} />
                                         </React.Fragment>
                                     ))
                                 ) : (
-                                    <ListItem>
-                                        <ListItemText primary="No high priority emails" />
+                                    <ListItem sx={{ borderRadius: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                                        <ListItemText 
+                                            primary={
+                                                <Typography align="center" color="text.secondary">
+                                                    No high priority emails
+                                                </Typography>
+                                            } 
+                                        />
                                     </ListItem>
                                 )}
                             </List>
@@ -525,35 +936,97 @@ export default function Dashboard() {
 
                 {/* Pending Actions */}
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '300px' }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper 
+                        elevation={2}
+                        sx={{ 
+                            p: 2.5, 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            height: '300px',
+                            borderRadius: 2,
+                            background: 'linear-gradient(to bottom, #ffffff, #f5f8ff)'
+                        }}
+                    >
+                        <Typography 
+                            variant="h6" 
+                            gutterBottom
+                            sx={{ 
+                                fontWeight: 'bold',
+                                pb: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderBottom: '1px solid #eaeaea'
+                            }}
+                        >
+                            <AssignmentIcon sx={{ mr: 1, color: '#1976d2' }} />
                             Pending Actions
                         </Typography>
                         <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
-                            <List>
+                            <List sx={{ py: 0 }}>
                                 {stats?.pending_actions && stats.pending_actions.length > 0 ? (
                                     stats.pending_actions.map((email) => (
                                         <React.Fragment key={email.id}>
-                                            <ListItemButton onClick={() => handleViewEmail(email.id)}>
+                                            <ListItemButton 
+                                                onClick={() => handleViewEmail(email.id)}
+                                                sx={{
+                                                    borderRadius: 1,
+                                                    my: 0.5,
+                                                    transition: 'all 0.2s',
+                                                    '&:hover': {
+                                                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                    }
+                                                }}
+                                            >
+                                                <Box 
+                                                    sx={{ 
+                                                        minWidth: 40, 
+                                                        display: 'flex', 
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <Avatar 
+                                                        sx={{ 
+                                                            width: 32, 
+                                                            height: 32, 
+                                                            bgcolor: '#1976d2'
+                                                        }}
+                                                    >
+                                                        <CheckCircleOutlineIcon fontSize="small" />
+                                                    </Avatar>
+                                                </Box>
                                                 <ListItemText
                                                     primary={
-                                                        <Typography noWrap variant="body1">
-                                                            {email.subject}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <SubjectIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', opacity: 0.7 }} />
+                                                            <Typography noWrap variant="body1" fontWeight="medium">
+                                                                {email.subject}
+                                                            </Typography>
+                                                        </Box>
                                                     }
                                                     secondary={
-                                                        <Typography noWrap variant="body2" color="text.secondary">
-                                                            Actions: {JSON.parse(email.action_items).join(', ')}
-                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <FormatListBulletedIcon fontSize="small" sx={{ mr: 0.5, color: 'text.secondary', opacity: 0.7 }} />
+                                                            <Typography noWrap variant="body2" color="text.secondary">
+                                                                Actions: {JSON.parse(email.action_items).join(', ')}
+                                                            </Typography>
+                                                        </Box>
                                                     }
+                                                    sx={{ ml: 1 }}
                                                 />
                                             </ListItemButton>
-                                            <Divider />
+                                            <Divider variant="inset" component="li" sx={{ ml: 7 }} />
                                         </React.Fragment>
                                     ))
                                 ) : (
-                                    <ListItem>
-                                        <ListItemText primary="No pending actions" />
+                                    <ListItem sx={{ borderRadius: 1, backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                                        <ListItemText 
+                                            primary={
+                                                <Typography align="center" color="text.secondary">
+                                                    No pending actions
+                                                </Typography>
+                                            } 
+                                        />
                                     </ListItem>
                                 )}
                             </List>
