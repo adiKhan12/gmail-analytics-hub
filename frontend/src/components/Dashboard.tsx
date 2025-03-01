@@ -10,6 +10,7 @@ import {
     List,
     ListItem,
     ListItemText,
+    ListItemButton,
     Divider,
     Snackbar,
     Alert,
@@ -27,8 +28,10 @@ import {
     Pie,
     Cell,
 } from 'recharts';
-import { getDashboardStats, syncEmails, analyzeEmails, EmailStats } from '../services/api';
-import { Link } from 'react-router-dom';
+import { getDashboardStats, syncEmails, analyzeEmails, EmailStats, Email, listEmails } from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import EmailDetail from './EmailDetail';
+import EmailDraftGenerator from './EmailDraftGenerator';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -65,6 +68,10 @@ export default function Dashboard() {
     const [analysisProgress, setAnalysisProgress] = useState({ current: 0, total: 0 });
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+    const [detailOpen, setDetailOpen] = useState(false);
+    const [draftMode, setDraftMode] = useState<'reply' | 'forward' | null>(null);
+    const navigate = useNavigate();
 
     const fetchData = async () => {
         try {
@@ -158,6 +165,71 @@ export default function Dashboard() {
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, []);
+
+    const handleViewEmail = async (emailId: string) => {
+        try {
+            // Fetch the full email details - using a simple filter approach
+            const response = await listEmails({});
+            
+            // Find the email with the matching ID
+            const foundEmail = response.emails.find(email => email.id === emailId);
+            
+            if (foundEmail) {
+                setSelectedEmail(foundEmail);
+                setDetailOpen(true);
+            } else {
+                setError('Email not found');
+            }
+        } catch (error) {
+            console.error('Error fetching email details:', error);
+            setError('Failed to fetch email details');
+        }
+    };
+
+    const handleCloseDetail = () => {
+        setDetailOpen(false);
+    };
+
+    const handleMarkAsRead = async (id: string) => {
+        // In a real implementation, this would call the API
+        // For now, we'll just update the UI
+        if (selectedEmail && selectedEmail.id === id) {
+            setSelectedEmail({
+                ...selectedEmail,
+                is_read: true
+            });
+        }
+    };
+
+    const handleToggleImportant = async (id: string, value: boolean) => {
+        // In a real implementation, this would call the API
+        // For now, we'll just update the UI
+        if (selectedEmail && selectedEmail.id === id) {
+            setSelectedEmail({
+                ...selectedEmail,
+                is_important: value
+            });
+        }
+    };
+
+    const handleDeleteEmail = async (id: string) => {
+        // In a real implementation, this would call the API
+        // For now, we'll just close the detail view
+        setDetailOpen(false);
+        setSelectedEmail(null);
+        // Refresh dashboard data
+        fetchData();
+    };
+
+    const handleReply = () => {
+        if (selectedEmail) {
+            setDraftMode('reply');
+        }
+    };
+
+    const handleCloseDraft = () => {
+        setDraftMode(null);
+    };
 
     const handleCloseError = () => setError(null);
     const handleCloseSuccess = () => setSuccess(null);
@@ -399,45 +471,77 @@ export default function Dashboard() {
 
                 {/* High Priority Emails */}
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '300px' }}>
                         <Typography variant="h6" gutterBottom>
                             High Priority Emails
                         </Typography>
-                        <List>
-                            {stats?.high_priority.map((email) => (
-                                <React.Fragment key={email.id}>
+                        <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+                            <List>
+                                {stats?.high_priority && stats.high_priority.length > 0 ? (
+                                    stats.high_priority.map((email) => (
+                                        <React.Fragment key={email.id}>
+                                            <ListItemButton onClick={() => handleViewEmail(email.id)}>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography noWrap variant="body1">
+                                                            {email.subject}
+                                                        </Typography>
+                                                    }
+                                                    secondary={
+                                                        <Typography noWrap variant="body2" color="text.secondary">
+                                                            From: {email.sender} | Priority: {email.priority_score}
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </ListItemButton>
+                                            <Divider />
+                                        </React.Fragment>
+                                    ))
+                                ) : (
                                     <ListItem>
-                                        <ListItemText
-                                            primary={email.subject}
-                                            secondary={`From: ${email.sender} | Priority: ${email.priority_score}`}
-                                        />
+                                        <ListItemText primary="No high priority emails" />
                                     </ListItem>
-                                    <Divider />
-                                </React.Fragment>
-                            ))}
-                        </List>
+                                )}
+                            </List>
+                        </Box>
                     </Paper>
                 </Grid>
 
                 {/* Pending Actions */}
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '300px' }}>
                         <Typography variant="h6" gutterBottom>
                             Pending Actions
                         </Typography>
-                        <List>
-                            {stats?.pending_actions.map((email) => (
-                                <React.Fragment key={email.id}>
+                        <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+                            <List>
+                                {stats?.pending_actions && stats.pending_actions.length > 0 ? (
+                                    stats.pending_actions.map((email) => (
+                                        <React.Fragment key={email.id}>
+                                            <ListItemButton onClick={() => handleViewEmail(email.id)}>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography noWrap variant="body1">
+                                                            {email.subject}
+                                                        </Typography>
+                                                    }
+                                                    secondary={
+                                                        <Typography noWrap variant="body2" color="text.secondary">
+                                                            Actions: {JSON.parse(email.action_items).join(', ')}
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </ListItemButton>
+                                            <Divider />
+                                        </React.Fragment>
+                                    ))
+                                ) : (
                                     <ListItem>
-                                        <ListItemText
-                                            primary={email.subject}
-                                            secondary={`Actions: ${JSON.parse(email.action_items).join(', ')}`}
-                                        />
+                                        <ListItemText primary="No pending actions" />
                                     </ListItem>
-                                    <Divider />
-                                </React.Fragment>
-                            ))}
-                        </List>
+                                )}
+                            </List>
+                        </Box>
                     </Paper>
                 </Grid>
             </Grid>
@@ -455,6 +559,28 @@ export default function Dashboard() {
                     {success}
                 </Alert>
             </Snackbar>
+
+            {/* Email Detail Dialog */}
+            {selectedEmail && (
+                <EmailDetail
+                    email={selectedEmail}
+                    open={detailOpen}
+                    onClose={handleCloseDetail}
+                    onMarkAsRead={handleMarkAsRead}
+                    onToggleImportant={handleToggleImportant}
+                    onDelete={handleDeleteEmail}
+                />
+            )}
+
+            {/* Email Draft Generator */}
+            {selectedEmail && draftMode && (
+                <EmailDraftGenerator
+                    open={!!draftMode}
+                    onClose={handleCloseDraft}
+                    originalEmail={selectedEmail}
+                    mode={draftMode}
+                />
+            )}
         </Container>
     );
 } 
