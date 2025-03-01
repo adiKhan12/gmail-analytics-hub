@@ -36,6 +36,7 @@ interface EmailDetailProps {
   onClose: () => void;
   onMarkAsRead: (id: string) => void;
   onToggleImportant: (id: string, value: boolean) => void;
+  onDelete: (id: string) => void;
 }
 
 const EmailDetail: React.FC<EmailDetailProps> = ({
@@ -44,6 +45,7 @@ const EmailDetail: React.FC<EmailDetailProps> = ({
   onClose,
   onMarkAsRead,
   onToggleImportant,
+  onDelete,
 }) => {
   // Track if we've already marked this email as read
   const emailIdRef = React.useRef<string | null>(null);
@@ -103,6 +105,12 @@ const EmailDetail: React.FC<EmailDetailProps> = ({
 
   const handleCloseDraft = () => {
     setDraftMode(null);
+  };
+
+  const handleDelete = () => {
+    if (email) {
+      onDelete(email.id);
+    }
   };
 
   return (
@@ -241,7 +249,7 @@ const EmailDetail: React.FC<EmailDetailProps> = ({
             <IconButton color="default" sx={{ mr: 1 }}>
               <ArchiveIcon />
             </IconButton>
-            <IconButton color="error">
+            <IconButton color="error" onClick={handleDelete}>
               <DeleteIcon />
             </IconButton>
           </Box>

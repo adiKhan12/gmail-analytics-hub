@@ -3,7 +3,14 @@ import { Container, Box, Typography, CircularProgress, Snackbar, Alert } from '@
 import EmailSearch from './EmailSearch';
 import EmailList from './EmailList';
 import EmailDetail from './EmailDetail';
-import { listEmails, Email, SearchFilters } from '../services/api';
+import { 
+  listEmails, 
+  Email, 
+  SearchFilters, 
+  markEmailAsRead, 
+  toggleEmailImportance, 
+  deleteEmail 
+} from '../services/api';
 
 const EmailsPage: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
@@ -86,24 +93,84 @@ const EmailsPage: React.FC = () => {
   }, []);
 
   const handleMarkAsRead = useCallback(async (id: string) => {
-    // This would typically call an API to mark the email as read
-    // For now, we'll just update the local state
-    setEmails(prevEmails => 
-      prevEmails.map(email => 
-        email.id === id ? { ...email, is_read: true } : email
-      )
-    );
-  }, []);
+    try {
+      const response = await markEmailAsRead(id);
+      
+      if (response.success) {
+        // Update the local state
+        setEmails(prevEmails => 
+          prevEmails.map(email => 
+            email.id === id ? { ...email, is_read: true } : email
+          )
+        );
+        
+        // Also update the selected email if it's the one being marked as read
+        if (selectedEmail && selectedEmail.id === id) {
+          setSelectedEmail({
+            ...selectedEmail,
+            is_read: true
+          });
+        }
+      } else {
+        setError(response.error || 'Failed to mark email as read');
+      }
+    } catch (err) {
+      console.error('Error marking email as read:', err);
+      setError('Failed to mark email as read. Please try again.');
+    }
+  }, [selectedEmail]);
 
   const handleToggleImportant = useCallback(async (id: string, value: boolean) => {
-    // This would typically call an API to toggle importance
-    // For now, we'll just update the local state
-    setEmails(prevEmails => 
-      prevEmails.map(email => 
-        email.id === id ? { ...email, is_important: value } : email
-      )
-    );
-  }, []);
+    try {
+      const response = await toggleEmailImportance(id, value);
+      
+      if (response.success) {
+        // Update the local state
+        setEmails(prevEmails => 
+          prevEmails.map(email => 
+            email.id === id ? { ...email, is_important: value } : email
+          )
+        );
+        
+        // Also update the selected email if it's the one being toggled
+        if (selectedEmail && selectedEmail.id === id) {
+          setSelectedEmail({
+            ...selectedEmail,
+            is_important: value
+          });
+        }
+      } else {
+        setError(response.error || 'Failed to update importance');
+      }
+    } catch (err) {
+      console.error('Error toggling email importance:', err);
+      setError('Failed to update importance. Please try again.');
+    }
+  }, [selectedEmail]);
+  
+  const handleDeleteEmail = useCallback(async (id: string) => {
+    try {
+      const response = await deleteEmail(id);
+      
+      if (response.success) {
+        // Update the local state
+        setEmails(prevEmails => 
+          prevEmails.filter(email => email.id !== id)
+        );
+        
+        // Close the detail view if the deleted email is currently selected
+        if (selectedEmail && selectedEmail.id === id) {
+          setDetailOpen(false);
+          setSelectedEmail(null);
+        }
+      } else {
+        setError(response.error || 'Failed to delete email');
+      }
+    } catch (err) {
+      console.error('Error deleting email:', err);
+      setError('Failed to delete email. Please try again.');
+    }
+  }, [selectedEmail]);
 
   const handleCloseError = () => setError(null);
 
@@ -134,6 +201,7 @@ const EmailsPage: React.FC = () => {
         onClose={handleCloseDetail}
         onMarkAsRead={handleMarkAsRead}
         onToggleImportant={handleToggleImportant}
+        onDelete={handleDeleteEmail}
       />
 
       <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError}>

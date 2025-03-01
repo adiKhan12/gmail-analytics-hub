@@ -189,4 +189,65 @@ async def list_emails(
             "action_items": json.loads(email.action_items) if email.action_items else [],
             "created_at": email.created_at.isoformat() if email.created_at else None
         } for email in emails]
-    } 
+    }
+
+@router.post("/{email_id}/read")
+async def mark_email_as_read(
+    email_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Mark an email as read
+    """
+    email = db.query(Email).filter(Email.id == email_id).first()
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not found"
+        )
+    
+    email.is_read = True
+    db.commit()
+    
+    return {"success": True, "message": "Email marked as read"}
+
+@router.post("/{email_id}/toggle-important")
+async def toggle_email_importance(
+    email_id: str,
+    is_important: bool,
+    db: Session = Depends(get_db)
+):
+    """
+    Toggle the importance of an email
+    """
+    email = db.query(Email).filter(Email.id == email_id).first()
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not found"
+        )
+    
+    email.is_important = is_important
+    db.commit()
+    
+    return {"success": True, "message": f"Email importance set to {is_important}"}
+
+@router.delete("/{email_id}")
+async def delete_email(
+    email_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete an email
+    """
+    email = db.query(Email).filter(Email.id == email_id).first()
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not found"
+        )
+    
+    db.delete(email)
+    db.commit()
+    
+    return {"success": True, "message": "Email deleted"} 

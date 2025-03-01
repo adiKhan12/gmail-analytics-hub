@@ -194,4 +194,73 @@ export async function generateEmailDraft(request: DraftRequest): Promise<DraftRe
             error: error instanceof Error ? error.message : 'Unknown error occurred'
         };
     }
+}
+
+export async function markEmailAsRead(emailId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/emails/${emailId}/read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error marking email as read:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
+}
+
+export async function toggleEmailImportance(emailId: string, isImportant: boolean): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/emails/${emailId}/toggle-important?is_important=${isImportant}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error toggling email importance:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
+}
+
+export async function deleteEmail(emailId: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/emails/${emailId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error deleting email:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
 } 
